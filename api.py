@@ -3,6 +3,8 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
 from passlib.context import CryptContext
@@ -119,6 +121,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # ---------------- ROUTES ----------------
 @app.post("/register")
@@ -271,4 +275,8 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
     db.refresh(post)
 
     return {"message": "Post created", "postId": post.id}
+
+@app.get("/")
+def main():
+    return FileResponse("static/index.html")
 
