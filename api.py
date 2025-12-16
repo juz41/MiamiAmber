@@ -14,6 +14,8 @@ from typing import List, Optional
 import os
 from pydantic import BaseModel
 from typing import List, Optional
+import html
+import re
 
 class RegisterRequest(BaseModel):
     username: str
@@ -83,11 +85,11 @@ class Post(Base):
 Base.metadata.create_all(bind=engine)
 
 # ---------------- SECURITY ----------------
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 def verify_password(plain, hashed): return pwd_context.verify(plain, hashed)
-def hash_password(password): return pwd_context.hash(password)
+def get_password_hash(password): return pwd_context.hash(password)
 def create_access_token(data: dict, expires_minutes: int = ACCESS_TOKEN_EXPIRE_MINUTES):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=expires_minutes)
@@ -111,6 +113,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
+
+def validate_username(username: str):
+    if len(username) > 20:
+        raise HTTPException(status_code=400, detail="Username too long (max 20 chars)")
+    # Only allow letters, numbers, underscores, hyphens
+    if not re.match(r'^[a-zA-Z0-9_-]+$', username):
+        raise HTTPException(status_code=400, detail="Username contains invalid characters")
+    return username
+
 # ---------------- APP ----------------
 app = FastAPI()
 
@@ -127,9 +138,10 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # ---------------- ROUTES ----------------
 @app.post("/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    if db.query(User).filter(User.name == request.username).first():
+    username = validate_username(request.username.strip())
+    if db.query(User).filter(User.name == username).first():
         raise HTTPException(status_code=400, detail="Username already exists")
-    user = User(name=request.username, hash=get_password_hash(request.password))
+    user = User(name=username, hash=get_password_hash(request.password))
     db.add(user)
     db.commit()
     db.refresh(user)
@@ -244,18 +256,18 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
         raise HTTPException(status_code=400, detail="Rating must be 0-100")
 
     post = Post(
-        title=request.title.strip(),
-        artist=request.artist.strip() if request.artist else "",
-        album=request.album.strip() if request.album else "",
-        musicbrainz_id=request.musicBrainzId.strip() if request.musicBrainzId else None,
-        text=request.text.strip(),
+        title=html.escape(request.title.strip()),
+        artist=html.escape(request.artist.strip() if request.artist else ""),
+        album=html.escape(request.album.strip() if request.album else ""),
+        musicbrainz_id=html.escape(request.musicBrainzId.strip() if request.musicBrainzId else None),
+        text=html.escape(request.text.strip()),
         rating=request.rating,
         date=datetime.utcnow(),
         user_id=current_user.id
     )
 
     # Handle tags
-    tag_names = [t.lower().strip() for t in request.tags if t.strip()]
+    tag_names = set([t.lower().strip() for t in request.tags if t.strip()])
     existing_tags = db.query(Tag).filter(Tag.name.in_(tag_names)).all()
     existing_names = [t.name for t in existing_tags]
 

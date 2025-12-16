@@ -3,31 +3,31 @@
 <head>
 <meta charset="UTF-8">
 <title>Miami Amber</title>
-<link rel="icon" href="amber.png" type="image/png">
+<link rel="icon" href="./static/amber.png" type="image/png">
 
 <style>
 
 @font-face {
   font-family: "Computer Modern";
-  src: url("./fonts/cmunss.otf") format("opentype");
+  src: url("./static/fonts/cmunss.otf") format("opentype");
   font-weight: 400;
 }
 
 @font-face {
   font-family: "Computer Modern";
-  src: url("./fonts/cmunsx.otf") format("opentype");
+  src: url("./static/fonts/cmunsx.otf") format("opentype");
   font-weight: 700;
 }
 
 @font-face {
   font-family: "Computer Modern";
-  src: url("./fonts/cmunsi.otf") format("opentype");
+  src: url("./static/fonts/cmunsi.otf") format("opentype");
   font-style: italic;
 }
 
 @font-face {
   font-family: "Computer Modern";
-  src: url("./fonts/cmunbxo.otf") format("opentype");
+  src: url("./static/fonts/cmunbxo.otf") format("opentype");
   font-weight: 700;
   font-style: italic;
 }
@@ -188,6 +188,8 @@ form button {
             <button type="button" id="loadFromMBID">Load from MusicBrainz</button>
             <label>Text</label><textarea name="text"></textarea>
             <label>Tags (comma separated)</label><input name="tags">
+	    <label>Rating (0–100)</label>
+    	    <input type="number" name="rating" min="0" max="100" value="0" required>	
             <button type="submit">Submit</button>
         </form>
     </div>
@@ -224,7 +226,7 @@ form button {
 </main>
 
 <script>
-const base_url = 'http://localhost:8000';
+const base_url = 'http://135.181.94.23:8000';
 let jwtToken = localStorage.getItem("jwt")||null;
 
 const tabs = document.querySelectorAll('.tab');
@@ -444,7 +446,8 @@ document.getElementById("createForm").addEventListener("submit", async e=>{
         album: form.album.value,
         musicBrainzId: form.id.value.trim() || null,
         text: form.text.value,
-        tags: form.tags.value.split(',').map(t=>t.trim())
+        tags: form.tags.value.split(',').map(t=>t.trim()),
+	rating: Number(form.rating.value)
     };
     try{
         const res = await fetch(`${base_url}/posts`, {
