@@ -150,7 +150,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
 
 @app.get("/posts")
 def get_posts(db: Session = Depends(get_db)):
-    posts = db.query(Post).all()
+    posts = db.query(Post).order_by(desc(Post.date)).limit(20).all()
     result = []
     for p in posts:
         result.append({
