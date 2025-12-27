@@ -274,19 +274,16 @@ document.getElementById("loadFromMBID").addEventListener("click", async () => {
 
         const data = await res.json();
 
-        // Album title
         if (data.title) {
             form.album.value = data.title;
         }
 
-        // Artist name (first credit)
         if (data["artist-credit"]?.length) {
             form.artist.value = data["artist-credit"]
                 .map(a => a.name)
                 .join(", ");
         }
 
-        // Tags
         if (Array.isArray(data.tags)) {
             form.tags.value = data.tags
                 .slice(0, 5)
@@ -351,7 +348,7 @@ function renderPostTile(post, options = {}) {
         <h3>${title}</h3>
         <p><strong>${artist}</strong> — ${album}</p>
         ${mbid ? `<p>MBID: ${mbid}</p>` : ''}
-        <p>${text}</p>
+	<p>${text.replace(/\n/g, '<br>')}</p>
         <p>Rating: ${rating}</p>
         ${showUser ? `<p><em>by ${userName} · ${date}</em></p>` : ''}
     `);

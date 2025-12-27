@@ -34,18 +34,15 @@ class CreatePostRequest(BaseModel):
     rating: Optional[int] = 0
     tags: List[str] = []
 
-# ---------------- CONFIG ----------------
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://miami_amber_user:1234@localhost/miami_amber_db")
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret_key")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# ---------------- DB -------------------
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# ---------------- MODELS ----------------
 class PostTag(Base):
     __tablename__ = "posts_tags"
     post_id = Column(Integer, ForeignKey("posts.id"), primary_key=True)
@@ -84,7 +81,6 @@ class Post(Base):
 
 Base.metadata.create_all(bind=engine)
 
-# ---------------- SECURITY ----------------
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -117,17 +113,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 def validate_username(username: str):
     if len(username) > 20:
         raise HTTPException(status_code=400, detail="Username too long (max 20 chars)")
-    # Only allow letters, numbers, underscores, hyphens
     if not re.match(r'^[a-zA-Z0-9_-]+$', username):
         raise HTTPException(status_code=400, detail="Username contains invalid characters")
     return username
 
-# ---------------- APP ----------------
 app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # remove in production
+    allow_origins=["http://miami.monster"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -135,7 +129,6 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# ---------------- ROUTES ----------------
 @app.post("/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     username = validate_username(request.username.strip())
@@ -266,12 +259,10 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
         user_id=current_user.id
     )
 
-    # Handle tags
     tag_names = set([t.lower().strip() for t in request.tags if t.strip()])
     existing_tags = db.query(Tag).filter(Tag.name.in_(tag_names)).all()
     existing_names = [t.name for t in existing_tags]
 
-    # Create missing tags
     for name in tag_names:
         if name not in existing_names:
             tag = Tag(name=name)
