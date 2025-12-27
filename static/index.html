@@ -226,7 +226,7 @@ form button {
 </main>
 
 <script>
-const base_url = 'http://135.181.94.23:8000';
+const base_url = 'http://amber.miami.monster';
 let jwtToken = localStorage.getItem("jwt")||null;
 
 const tabs = document.querySelectorAll('.tab');
@@ -356,8 +356,6 @@ function renderPostTile(post, options = {}) {
     return div;
 }
 
-
-
 async function loadRecentPosts(){
     const container = document.getElementById('recentPosts');
     container.innerHTML='Loading...';
@@ -376,8 +374,6 @@ async function loadRecentPosts(){
         });
     }catch(e){ console.error(e); container.innerHTML='Error loading posts'; }
 }
-
-
 
 document.getElementById("userSearchForm").addEventListener("submit", async e => {
     e.preventDefault();
