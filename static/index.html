@@ -303,7 +303,7 @@ document.getElementById("loadFromMBID").addEventListener("click", async () => {
 function loadCoverArt(mbid, imgElement) {
     if (!mbid) return;
 
-    const url = `https://coverartarchive.org/release/${mbid}/front`;
+    const url = `https://coverartarchive.org/release/${mbid}/front-250`;
 
     imgElement.src = url;
     imgElement.alt = "Album cover";
