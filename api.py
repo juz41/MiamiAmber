@@ -127,8 +127,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 @app.post("/api/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     username = validate_username(request.username.strip())
@@ -278,8 +276,3 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
     db.refresh(post)
 
     return {"message": "Post created", "postId": post.id}
-
-@app.get("/api/")
-def main():
-    return FileResponse("static/index.html")
-
