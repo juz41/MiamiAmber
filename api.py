@@ -129,7 +129,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-@app.post("/register")
+@app.post("/api/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     username = validate_username(request.username.strip())
     if db.query(User).filter(User.name == username).first():
@@ -140,7 +140,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.refresh(user)
     return {"message": "Registration successful", "id": user.id}
 
-@app.post("/login")
+@app.post("/api/login")
 def login(request: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name == request.username).first()
     if not user or not verify_password(request.password, user.hash):
@@ -148,7 +148,7 @@ def login(request: LoginRequest, db: Session = Depends(get_db)):
     token = create_access_token({"id": user.id, "name": user.name})
     return {"token": token}
 
-@app.get("/posts")
+@app.get("/api/posts")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(Post).order_by(desc(Post.date)).limit(20).all()
     result = []
@@ -167,7 +167,7 @@ def get_posts(db: Session = Depends(get_db)):
         })
     return result
 
-@app.get("/posts/{post_id}")
+@app.get("/api/posts/{post_id}")
 def get_post(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post: raise HTTPException(status_code=404, detail="Post not found")
@@ -184,7 +184,7 @@ def get_post(post_id: int, current_user: User = Depends(get_current_user), db: S
         "tags": [pt.tag.name for pt in post.post_tags]
     }
 
-@app.get("/users/byname/{nickname}")
+@app.get("/api/users/byname/{nickname}")
 def get_user_by_name(nickname: str, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.name.ilike(nickname)).first()
     if not user: raise HTTPException(status_code=404, detail="User not found")
@@ -196,7 +196,7 @@ def get_user_by_name(nickname: str, db: Session = Depends(get_db)):
                    "date": p.date, "tags": [pt.tag.name for pt in p.post_tags]} for p in posts]
     }
 
-@app.get("/tags/{tag_name}")
+@app.get("/api/tags/{tag_name}")
 def get_posts_by_tag(tag_name: str, db: Session = Depends(get_db)):
     posts = db.query(Post).join(PostTag).join(Tag).filter(Tag.name == tag_name).all()
     result = []
@@ -214,7 +214,7 @@ def get_posts_by_tag(tag_name: str, db: Session = Depends(get_db)):
         })
     return result
 
-@app.get("/search")
+@app.get("/api/search")
 def search(q: str, db: Session = Depends(get_db)):
     query = q.lower()
     posts = db.query(Post).join(PostTag, isouter=True).join(Tag, isouter=True).all()
@@ -239,7 +239,7 @@ def search(q: str, db: Session = Depends(get_db)):
             })
     return result
 
-@app.post("/posts")
+@app.post("/api/posts")
 def create_post(request: CreatePostRequest, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not request.title.strip():
         raise HTTPException(status_code=400, detail="Title cannot be empty")
@@ -279,7 +279,7 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
 
     return {"message": "Post created", "postId": post.id}
 
-@app.get("/")
+@app.get("/api/")
 def main():
     return FileResponse("static/index.html")
 
