@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Body
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -33,6 +33,15 @@ class CreatePostRequest(BaseModel):
     text: str
     rating: Optional[int] = 0
     tags: List[str] = []
+
+class UpdatePostRequest(BaseModel):
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    album: Optional[str] = None
+    musicBrainzId: Optional[str] = None
+    text: Optional[str] = None
+    rating: Optional[int] = None
+    tags: Optional[List[str]] = None
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://miami_amber_user:1234@localhost/miami_amber_db")
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret_key")
@@ -276,3 +285,71 @@ def create_post(request: CreatePostRequest, db: Session = Depends(get_db), curre
     db.refresh(post)
 
     return {"message": "Post created", "postId": post.id}
+
+@app.put("/api/posts/{post_id}")
+def update_post(
+    post_id: int,
+    request: UpdatePostRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only modify your own posts")
+
+    # Update fields if provided
+    if request.title is not None:
+        post.title = html.escape(request.title.strip())
+    if request.artist is not None:
+        post.artist = html.escape(request.artist.strip())
+    if request.album is not None:
+        post.album = html.escape(request.album.strip())
+    if request.musicBrainzId is not None:
+        post.musicbrainz_id = html.escape(request.musicBrainzId.strip())
+    if request.text is not None:
+        post.text = html.escape(request.text.strip())
+    if request.rating is not None:
+        if request.rating < 0 or request.rating > 100:
+            raise HTTPException(status_code=400, detail="Rating must be 0-100")
+        post.rating = request.rating
+
+    # Handle tags
+    if request.tags is not None:
+        # Clear existing post_tags
+        post.post_tags.clear()
+        tag_names = set([t.lower().strip() for t in request.tags if t.strip()])
+        existing_tags = db.query(Tag).filter(Tag.name.in_(tag_names)).all()
+        existing_names = [t.name for t in existing_tags]
+
+        for name in tag_names:
+            if name not in existing_names:
+                tag = Tag(name=name)
+                db.add(tag)
+                existing_tags.append(tag)
+        db.commit()
+
+        for tag in existing_tags:
+            post.post_tags.append(PostTag(tag_id=tag.id))
+
+    db.commit()
+    db.refresh(post)
+    return {"message": "Post updated", "postId": post.id}
+
+
+@app.delete("/api/posts/{post_id}")
+def delete_post(
+    post_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+    if post.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete your own posts")
+
+    db.delete(post)
+    db.commit()
+    return {"message": "Post deleted", "postId": post.id}
