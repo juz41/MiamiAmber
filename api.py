@@ -73,6 +73,21 @@ class User(Base):
 
     posts = relationship("Post", back_populates="user")
 
+        following = relationship(
+        "Follow",
+        foreign_keys=[Follow.follower_id],
+        backref="follower",
+        cascade="all, delete-orphan"
+    )
+
+    followers = relationship(
+        "Follow",
+        foreign_keys=[Follow.following_id],
+        backref="following",
+        cascade="all, delete-orphan"
+    )
+
+
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True)
@@ -87,6 +102,12 @@ class Post(Base):
 
     user = relationship("User", back_populates="posts")
     post_tags = relationship("PostTag", backref="post")
+
+class Follow(Base):
+    __tablename__ = "follows"
+    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    following_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
 Base.metadata.create_all(bind=engine)
 
@@ -202,6 +223,78 @@ def get_user_by_name(nickname: str, db: Session = Depends(get_db)):
                    "musicbrainz_id": p.musicbrainz_id, "text": p.text, "rating": p.rating,
                    "date": p.date, "tags": [pt.tag.name for pt in p.post_tags]} for p in posts]
     }
+
+@app.post("/api/users/{user_id}/follow")
+def follow_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if current_user.id == user_id:
+        raise HTTPException(status_code=400, detail="You cannot follow yourself")
+
+    target = db.query(User).filter(User.id == user_id).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    existing = db.query(Follow).filter_by(
+        follower_id=current_user.id,
+        following_id=user_id
+    ).first()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Already following")
+
+    follow = Follow(
+        follower_id=current_user.id,
+        following_id=user_id
+    )
+    db.add(follow)
+    db.commit()
+
+    return {"message": "User followed"}
+
+@app.delete("/api/users/{user_id}/follow")
+def unfollow_user(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    follow = db.query(Follow).filter_by(
+        follower_id=current_user.id,
+        following_id=user_id
+    ).first()
+
+    if not follow:
+        raise HTTPException(status_code=400, detail="Not following")
+
+    db.delete(follow)
+    db.commit()
+
+    return {"message": "User unfollowed"}
+
+@app.get("/api/users/{user_id}/followers")
+def get_followers(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return [
+        {"id": f.follower.id, "name": f.follower.name}
+        for f in user.followers
+    ]
+
+@app.get("/api/users/{user_id}/following")
+def get_following(user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return [
+        {"id": f.following.id, "name": f.following.name}
+        for f in user.following
+    ]
+
 
 @app.get("/api/tags/{tag_name}")
 def get_posts_by_tag(tag_name: str, db: Session = Depends(get_db)):
