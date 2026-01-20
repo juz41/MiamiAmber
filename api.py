@@ -73,7 +73,7 @@ class User(Base):
 
     posts = relationship("Post", back_populates="user")
 
-        following = relationship(
+    following = relationship(
         "Follow",
         foreign_keys=[Follow.follower_id],
         backref="follower",
