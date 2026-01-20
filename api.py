@@ -1,10 +1,8 @@
 #!/usr/bin/env python
 
-from fastapi import FastAPI, Depends, HTTPException, status, Body
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import FastAPI, Depends, HTTPException 
+from fastapi.security import OAuth2PasswordBearer 
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, desc 
 from sqlalchemy.orm import sessionmaker, declarative_base, relationship, Session
 from passlib.context import CryptContext
@@ -13,7 +11,6 @@ from jose import JWTError, jwt
 from typing import List, Optional
 import os
 from pydantic import BaseModel
-from typing import List, Optional
 import html
 import re
 
@@ -64,6 +61,12 @@ class Tag(Base):
 
     post_tags = relationship("PostTag", backref="tag")
 
+class Follow(Base):
+    __tablename__ = "follows"
+    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    following_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True)
@@ -87,7 +90,6 @@ class User(Base):
         cascade="all, delete-orphan"
     )
 
-
 class Post(Base):
     __tablename__ = "posts"
     id = Column(Integer, primary_key=True)
@@ -103,14 +105,7 @@ class Post(Base):
     user = relationship("User", back_populates="posts")
     post_tags = relationship("PostTag", backref="post")
 
-class Follow(Base):
-    __tablename__ = "follows"
-    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    following_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    created_at = Column(DateTime, default=datetime.utcnow)
-
 Base.metadata.create_all(bind=engine)
-
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
