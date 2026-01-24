@@ -43,7 +43,7 @@ class UpdatePostRequest(BaseModel):
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://miami_amber_user:1234@localhost/miami_amber_db")
 JWT_SECRET = os.getenv("JWT_SECRET", "your_jwt_secret_key")
 JWT_ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+ACCESS_TOKEN_EXPIRE_MINUTES = 60*24*31
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
