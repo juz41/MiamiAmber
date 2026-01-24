@@ -107,7 +107,7 @@ class Post(Base):
 
 Base.metadata.create_all(bind=engine)
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/login")
 
 def verify_password(plain, hashed): return pwd_context.verify(plain, hashed)
 def get_password_hash(password): return pwd_context.hash(password)
@@ -189,6 +189,41 @@ def get_posts(db: Session = Depends(get_db)):
             "tags": [pt.tag.name for pt in p.post_tags]
         })
     return result
+
+@app.get("/api/posts/following")
+def get_following_posts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    followed_ids = (
+        db.query(Follow.following_id)
+        .filter(Follow.follower_id == current_user.id)
+        .subquery()
+    )
+
+    posts = (
+        db.query(Post)
+        .filter(Post.user_id.in_(followed_ids))
+        .order_by(desc(Post.date))
+        .all()
+    )
+
+    return [
+        {
+            "id": p.id,
+            "title": p.title,
+            "artist": p.artist,
+            "album": p.album,
+            "musicbrainz_id": p.musicbrainz_id,
+            "text": p.text,
+            "rating": p.rating,
+            "date": p.date,
+            "user": {"id": p.user.id, "name": p.user.name} if p.user else None,
+            "tags": [pt.tag.name for pt in p.post_tags]
+        }
+        for p in posts
+    ]
+
 
 @app.get("/api/posts/{post_id}")
 def get_post(post_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
