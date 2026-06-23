@@ -1,235 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Miami Amber</title>
-<link rel="icon" href="./amber.png" type="image/png">
-
-<style>
-
-:root {
-  --primary-bg: #ffffff;
-  --header-bg: #ffc000;
-  --header-color: #ffffff;
-  --tab-bg: #ffffff;
-  --tab-active-bg: #ffffff;
-  --border-color: #ffc000;
-  --button-bg: #ffffff;
-  --button-border: #ffc000;
-  --tile-bg: #ffffff;
-  --tile-border: #ffc000;
-  --text-color: #000000;
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-body, h1, h2, h3, p, ul, li, header, nav, main, form { margin:0; padding:0; }
-body {
-  background: var(--primary-bg);
-  color: var(--text-color);
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-header {
-  width:100%;
-  padding:20px;
-  background: var(--header-bg);
-  color: var(--header-color);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-nav {
-  width:100%;
-  padding:10px;
-  border-bottom:3px solid var(--border-color);
-}
-nav ul {
-  display:flex;
-  justify-content:center;
-  list-style:none;
-  gap:20px;
-}
-nav li {
-    cursor: pointer;
-    padding: 6px 12px;
-    border: 3px solid var(--border-color);
-    background: var(--tab-bg);
-    font-weight: normal;
-}
-
-nav li.active {
-    border-color: var(--header-bg);
-    font-weight: bold;
-}
-
-
-
-main {
-  width:900px;
-  max-width:95%;
-  margin:0 auto;
-  padding:20px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-}
-
-form {
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  margin-bottom:30px;
-}
-form input, form textarea {
-  width:100%;
-  padding:6px;
-  margin-bottom:12px;
-  border:1px solid var(--border-color);
-}
-form button {
-  padding:8px 12px;
-  border:3px solid var(--button-border);
-  background: var(--button-bg);
-  cursor:pointer;
-}
-
-.button {
-  padding:8px 12px;
-  border:3px solid var(--button-border);
-  background: var(--button-bg);
-  cursor:pointer;
-  width: 100%;
-}
-
-.post-list {
-  width:100%;
-  display:flex;
-  flex-wrap: wrap;
-  gap:20px;
-  margin-top:20px;
-  justify-content:flex-start;
-}
-.post-tile {
-  background: var(--tile-bg);
-  border:3px solid var(--tile-border);
-  padding:12px;
-  width:250px;
-}
-.post-tile h3 { margin-bottom:6px; }
-.post-tile p { margin:2px 0; font-size:0.9rem; }
-
-.tab-content { display:none; width:100%; flex-direction:column; align-items:stretch; }
-.tab-content.active { display:flex; }
-
-.subnav { display:flex; gap:10px; margin-bottom:12px; }
-.subnav .view-btn { width:auto; }
-.view-btn.active { background: var(--header-bg); color:#fff; }
-
-.row { display:flex; gap:10px; }
-.row input { flex:1; margin-bottom:0; }
-
-.muted { color:#666; font-size:0.85rem; margin-bottom:10px; }
-
-.tag-pill {
-  display:inline-block;
-  padding:2px 8px;
-  margin:2px 4px 2px 0;
-  border:1px solid var(--border-color);
-  cursor:pointer;
-  font-size:0.8rem;
-}
-.tag-pill:hover { background: var(--header-bg); color:#fff; }
-
-.owner-actions { display:flex; gap:8px; margin-top:8px; }
-.owner-actions button { flex:1; padding:4px 8px; }
-
-</style>
-
-</head>
-<body>
-
-<header>
-    <h1>Miami Amber</h1>
-</header>
-
-<nav>
-    <ul>
-        <li class="tab active" data-tab="home">Home</li>
-        <li class="tab" data-tab="create">Create Post</li>
-        <li class="tab" data-tab="login">Login/Register</li>
-        <li class="tab" data-tab="userTab">User</li>
-    </ul>
-</nav>
-
-<main>
-    <div id="home" class="tab-content active">
-        <h2>Recent Posts</h2>
-        <div class="subnav">
-            <button type="button" class="button view-btn active" data-view="all">All</button>
-            <button type="button" class="button view-btn" data-view="following" id="followingBtn" style="display:none;">Following</button>
-        </div>
-        <form id="searchForm" class="row">
-            <input name="q" placeholder="Search posts...">
-            <button type="submit">Search</button>
-        </form>
-        <p id="postsLabel" class="muted"></p>
-        <div id="recentPosts" class="post-list"></div>
-    </div>
-
-    <div id="create" class="tab-content">
-        <h2>Create Post</h2>
-        <form id="createForm">
-            <label>Title</label><input name="title" required>
-            <label>Artist</label><input name="artist">
-            <label>Album</label><input name="album">
-            <label>MBID</label><input name="mbid">
-            <button type="button" id="loadFromMBID">Load from MusicBrainz</button>
-            <label>Text</label><textarea name="text"></textarea>
-            <label>Tags (comma separated)</label><input name="tags">
-	    <label>Rating (0–100)</label>
-    	    <input type="number" name="rating" min="0" max="100" value="0" required>	
-            <button type="submit" id="createSubmitBtn">Submit</button>
-            <button type="button" id="cancelEditBtn" style="display:none;">Cancel edit</button>
-        </form>
-    </div>
-
-    <div id="login" class="tab-content">
-        <h2>Login</h2>
-        <form id="loginForm">
-            <label>Username</label><input name="username" required>
-            <label>Password</label><input type="password" name="password" required>
-            <button type="submit">Login</button>
-        </form>
-
-        <h2>Register</h2>
-        <form id="registerForm">
-            <label>Username</label><input name="username" required>
-            <label>Password</label><input type="password" name="password" required>
-            <button type="submit">Register</button>
-        </form>
-        <div id="logoutSection">
-            <p>You are logged in.</p>
-            <button id="logoutBtn" class="button">Logout</button>
-        </div>
-    </div>
-
-    <div id="userTab" class="tab-content">
-        <h2>Search User</h2>
-        <form id="userSearchForm">
-            <input name="nickname" placeholder="Enter username" required>
-            <button type="submit">Load User</button>
-        </form>
-        <div id="userInfo"></div>
-        <div id="followActions"></div>
-        <div id="userPosts" class="post-list"></div>
-    </div>
-</main>
-
-<script>
 const base_url = 'https://amber.miami.monster/api';
 let jwtToken = localStorage.getItem("jwt")||null;
 let currentFilter = {type: 'all'};
@@ -279,12 +47,7 @@ document.getElementById("loadFromMBID").addEventListener("click", async () => {
 
     try {
         const res = await fetch(
-            `https://musicbrainz.org/ws/2/release/${mbid}?inc=artists+tags&fmt=json`,
-            {
-                headers: {
-                    "User-Agent": "MiamiAmber/1.0 (example@email.com)"
-                }
-            }
+            `https://musicbrainz.org/ws/2/release/${mbid}?inc=artists+tags&fmt=json`
         );
 
         if (!res.ok) {
@@ -320,12 +83,15 @@ document.getElementById("loadFromMBID").addEventListener("click", async () => {
 });
 
 
+function getImageQuality() {
+    return localStorage.getItem('imageQuality') || '500';
+}
+
 function loadCoverArt(mbid, imgElement) {
     if (!mbid) return;
-
-    const url = `https://coverartarchive.org/release/${mbid}/front-250`;
-
-    imgElement.src = url;
+    const quality = getImageQuality();
+    if (quality === 'off') { imgElement.style.display = 'none'; return; }
+    imgElement.src = `https://coverartarchive.org/release/${mbid}/front-${quality}`;
     imgElement.alt = "Album cover";
     imgElement.style.display = 'block';
 }
@@ -664,7 +430,10 @@ function updateLoginUI() {
 loadPosts({type: 'all'});
 updateLoginUI();
 
-</script>
+const imageQualityEl = document.getElementById('imageQualitySetting');
+imageQualityEl.value = getImageQuality();
+imageQualityEl.addEventListener('change', () => {
+    localStorage.setItem('imageQuality', imageQualityEl.value);
+    loadPosts(currentFilter);
+});
 
-</body>
-</html>
