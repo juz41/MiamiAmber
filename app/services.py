@@ -6,9 +6,8 @@ from .models import Post, PostTag, Tag
 
 
 def sync_post_tags(db: Session, post: Post, tag_names) -> None:
-    """Replace `post`'s tags with the given set of tag names, creating any
-    tags that don't exist yet. Used by both create_post and update_post,
-    which previously duplicated this logic verbatim.
+    """Replace post's tags with the given set of tag names, creating any
+    tags that don't exist yet.
     """
     post.post_tags.clear()
 
@@ -24,7 +23,9 @@ def sync_post_tags(db: Session, post: Post, tag_names) -> None:
             tag = Tag(name=name)
             db.add(tag)
             existing_tags.append(tag)
-    db.commit()
+
+    db.flush()
 
     for tag in existing_tags:
         post.post_tags.append(PostTag(tag_id=tag.id))
+

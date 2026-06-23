@@ -66,4 +66,4 @@ class Post(Base):
     user_id = Column(Integer, ForeignKey("users.id"))
 
     user = relationship("User", back_populates="posts")
-    post_tags = relationship("PostTag", backref="post")
+    post_tags = relationship("PostTag", backref="post", cascade="all, delete-orphan")
