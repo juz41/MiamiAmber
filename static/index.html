@@ -67,8 +67,6 @@ nav li.active {
     font-weight: bold;
 }
 
-
-
 main {
   width:900px;
   max-width:95%;
@@ -147,6 +145,25 @@ form button {
 .owner-actions { display:flex; gap:8px; margin-top:8px; }
 .owner-actions button { flex:1; padding:4px 8px; }
 
+.cover-art {
+  max-height: 700px;
+  width: auto;
+  max-width: 100%;
+  display: block;
+  margin: auto;
+}
+
+@media (max-width: 700px) {
+  nav ul {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+  nav li {
+    text-align: center;
+  }
+}
+
 </style>
 
 </head>
@@ -168,7 +185,7 @@ form button {
 
 <main>
     <div id="home" class="tab-content active">
-        <h2>Recent Posts</h2>
+        <h2>Posts</h2>
         <div class="subnav">
             <button type="button" class="button view-btn active" data-view="all">All</button>
             <button type="button" class="button view-btn" data-view="following" id="followingBtn" style="display:none;">Following</button>
@@ -193,20 +210,31 @@ form button {
             <label>Tags (comma separated)</label><input name="tags">
 	    <label>Rating (0–100)</label>
     	    <input type="number" name="rating" min="0" max="100" value="0" required>	
+    	    <ul style="font-size:0.8rem; color:#666; list-style:none; margin-bottom:12px;">
+              <li>0 — worst of all time</li>
+              <li>10 — close to as horrible as it gets</li>
+              <li>20 — bad</li>
+              <li>30 — horrible</li>
+              <li>40 — indifferent</li>
+              <li>50 — listenable</li>
+              <li>60 — good</li>
+              <li>70 — very good</li>
+              <li>80 — amazing</li>
+              <li>90 — close to as good as it gets</li>
+              <li>100 — best of all time</li>
+            </ul>
             <button type="submit" id="createSubmitBtn">Submit</button>
             <button type="button" id="cancelEditBtn" style="display:none;">Cancel edit</button>
         </form>
     </div>
 
     <div id="login" class="tab-content">
-        <h2>Login</h2>
         <form id="loginForm">
             <label>Username</label><input name="username" required>
             <label>Password</label><input type="password" name="password" required>
             <button type="submit">Login</button>
         </form>
 
-        <h2>Register</h2>
         <form id="registerForm">
             <label>Username</label><input name="username" required>
             <label>Password</label><input type="password" name="password" required>

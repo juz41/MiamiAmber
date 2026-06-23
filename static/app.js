@@ -122,8 +122,7 @@ function renderPostTile(post, options = {}) {
 
     // Cover image
     const img = document.createElement('img');
-    img.style.width = '100%';
-    img.style.marginBottom = '8px';
+    img.className = 'cover-art';
     img.style.display = 'none';
 
     if (mbid) {
