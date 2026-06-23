@@ -1,10 +1,4 @@
 """Shared functions for turning ORM objects into JSON-able dicts.
-
-Bug fixed here: the original file rebuilt this same "Post -> dict" literal
-five separate times across different endpoints, and one of those copies
-(/api/tags/{tag_name}) had silently drifted and was missing the
-musicbrainz_id field. Centralizing it here means every endpoint returns the
-same shape.
 """
 
 from typing import Optional

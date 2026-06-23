@@ -14,11 +14,6 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 @router.get("/byname/{nickname}")
 def get_user_by_name(nickname: str, db: Session = Depends(get_db)):
-    # Bug fixed here: nickname was previously passed straight into
-    # `.ilike()`, so a caller could submit "%" or "_" as wildcard
-    # characters to match usernames they shouldn't be able to guess from.
-    # Escaping it here means the lookup only matches the literal nickname
-    # (case-insensitively), as intended.
     pattern = escape_like_pattern(nickname)
     user = db.query(User).filter(User.name.ilike(pattern, escape="\\")).first()
     if not user:

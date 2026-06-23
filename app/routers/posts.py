@@ -14,8 +14,6 @@ from ..utils import escape_optional
 
 router = APIRouter(prefix="/api", tags=["posts"])
 
-# Eager-load the relationships every post serialization needs, so listing N
-# posts doesn't run N+1 extra queries for post.user and each post_tags.tag.
 POST_LOAD_OPTIONS = (
     joinedload(Post.user),
     selectinload(Post.post_tags).joinedload(PostTag.tag),
@@ -56,11 +54,6 @@ def get_following_posts(
 
 @router.get("/posts/{post_id}")
 def get_post(post_id: int, db: Session = Depends(get_db)):
-    # Bug fixed here: this endpoint used to require
-    # `current_user: User = Depends(get_current_user)` but never actually
-    # used current_user. That meant logged-out visitors got a 401 just for
-    # viewing a single post, inconsistent with /api/posts (list) and
-    # /api/search, which are both public. Made it public to match.
     post = (
         db.query(Post)
         .options(*POST_LOAD_OPTIONS)
@@ -91,9 +84,6 @@ def search(q: str, db: Session = Depends(get_db)):
     posts = (
         db.query(Post)
         .options(*POST_LOAD_OPTIONS)
-        # Bug fixed here: this join previously had no .distinct(), so a
-        # post with N tags was returned N times (once per matching
-        # PostTag/Tag row) and ended up duplicated N times in the response.
         .join(PostTag, isouter=True)
         .join(Tag, isouter=True)
         .distinct()
@@ -130,9 +120,6 @@ def create_post(
         title=escape_optional(request.title.strip()),
         artist=escape_optional(request.artist.strip() if request.artist else ""),
         album=escape_optional(request.album.strip() if request.album else ""),
-        # Bug fixed here: previously html.escape() was called directly on
-        # `None` whenever musicBrainzId was omitted, raising a TypeError
-        # and crashing the request. escape_optional() passes None through.
         musicbrainz_id=escape_optional(
             request.musicBrainzId.strip() if request.musicBrainzId else None
         ),
